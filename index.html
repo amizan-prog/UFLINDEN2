@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UFL Inden Monitor</title>
+  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiVUZMIEluZGVuIE1vbml0b3IiLCJzaG9ydF9uYW1lIjoiVUZMIEluZGVuIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwRjE3MkEiLCJ0aGVtZV9jb2xvciI6IiMyNTYzRUIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sOyUzQ3N2ZyUyMHhtbG5zJTNEJTIyaHR0cCUzQSUyRiUyRnd3dy53My5vcmclMkYwMDAlMkZzdmclMjIlMjB2aWV3Qm94JTNEJTIyMCUyMDAlMjAxOTIlMjAxOTIlMjIlM0UlM0NyZWN0JTIwd2lkdGglM0QlMjIxOTIlMjIlMjBoZWlnaHQlM0QlMjIxOTIlMjJyeCUzRCUyMjMyJTIyJTIwZmlsbCUzRCUyMiUxNmEzNGElMjIlMkYlM0UlM0N0ZXh0JTIweCUzRCUyOTYlMjIlMjB5JTNEJTIxMjAlMjIlMjBmb250LXNpemUlM0QlMjI3MiUyMiUyMGZvbnQtd2VpZ2h0JTNEJTIyYm9sZCUyMiUyMGZpbGwlM0QlMjJ3aGl0ZSUyMiUyMHRleHQtYW5jaG9yJTNEJTIybWlkZGxlJTIyJTIwZm9udC1mYW1pbHklM0QlMjJBcmlhbCUyMiUyMFVGTCUzQyUyRnRleHQlM0UlM0MlMkZzdmclM0UifX19">
+  <meta name="theme-color" content="#2563EB">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes shrinkBar { from { width: 100%; } to { width: 0%; } }
+    @keyframes neonGreenPulse { 0%,100% { box-shadow: 0 0 5px #16A34A, 0 0 10px #16A34A, 0 0 15px rgba(22,163,74,0.5); border-color: #16A34A; } 50% { box-shadow: 0 0 10px #16A34A, 0 0 20px #16A34A, 0 0 35px rgba(22,163,74,0.8); border-color: #22C55E; } }
+    .neon-green-border { animation: neonGreenPulse 1.5s ease-in-out infinite; }
+    @keyframes soundWave {
+      0%, 100% { transform: scaleY(0.4); }
+      50% { transform: scaleY(1.2); }
+    }
+    .sound-bar { animation: soundWave 0.6s ease-in-out infinite; transform-origin: bottom; }
+    .sound-bar:nth-child(2) { animation-delay: 0.1s; }
+    .sound-bar:nth-child(3) { animation-delay: 0.2s; }
+    .sound-bar:nth-child(4) { animation-delay: 0.3s; }
+  </style>
+</head>
+<body class="min-h-screen transition-colors duration-200" id="body" style="background-color: #F8F9FA;">
+  <header class="border-b transition-colors duration-200" id="header" style="border-color: #E2E8F0; background-color: #FFFFFF;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: #2563EB;">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a4 4 0 008 0V7a4 4 0 10-8 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 114 0v2"></path></svg>
+          </div>
+          <h1 class="text-2xl font-bold" id="title" style="color: #0F172A;">UFL Inden Monitor</h1>
+          <span id="pwaBadge" class="px-2 py-1 rounded-md text-xs font-bold hidden" style="background-color: #F0FDF4; color: #16A34A;">📱 PWA</span>
+        </div>
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <span class="text-sm hidden sm:inline" id="lastUpdatedTime" style="color: #64748B;"></span>
+          <button onclick="toggleLang()" class="px-2.5 py-2 rounded-md hover:opacity-80 flex items-center space-x-1.5" id="langButton" style="background-color: #EFF6FF;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M3 9h12M3 13h12M3 17h12M16 3v18"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3v18"></path></svg>
+            <span class="text-xs font-bold" id="langLabel">BM</span>
+          </button>
+          <button onclick="handleInstallPwa()" id="installButton" class="px-3 py-2 rounded-md text-xs font-bold animate-pulse flex items-center space-x-1 hidden" style="background-color: #7C3AED; color: #FFFFFF;">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            <span>INSTALL PWA</span>
+          </button>
+          <button onclick="togglePwaGuide()" id="pwaGuideButton" class="px-3 py-2 rounded-md text-xs font-bold flex items-center space-x-1" style="background-color: #EFF6FF; color: #2563EB;">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            <span class="hidden sm:inline">PWA GUIDE</span>
+          </button>
+          <button onclick="toggleSound()" class="p-2 rounded-md hover:opacity-80" id="soundButton" style="background-color: #F0FDF4;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+          </button>
+          <button onclick="toggleTheme()" class="p-2 rounded-md hover:opacity-80" style="background-color: #EFF6FF;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+          </button>
+          <button onclick="toggleDebug()" class="p-2 rounded-md hover:opacity-80" id="debugButton" style="background-color: #EFF6FF;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+          </button>
+          <button onclick="toggleSettings()" class="p-2 rounded-md hover:opacity-80" style="background-color: #EFF6FF;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          </button>
+          <button onclick="fetchData()" class="p-2 rounded-md hover:opacity-80" id="refreshButton" style="background-color: #EFF6FF;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div id="pwaInstallMessage" class="mt-3 p-3 rounded-md flex items-start hidden" style="background-color: #A78BFA15; border: 1px solid #A78BFA;">
+        <svg class="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        <p class="text-xs" style="color: #334155;">
+          <strong style="color: #A78BFA;">Untuk notification + chime berfungsi walaupun tab minimize/close:</strong> Install app ini sebagai PWA. Klik INSTALL PWA atau PWA GUIDE. Selepas install, buka dari desktop — notification + bunyi OS akan berfungsi walaupun app di-minimize.
+        </p>
+      </div>
+      <div id="pwaActiveMessage" class="mt-3 p-3 rounded-md flex items-start hidden" style="background-color: #F0FDF4; border: 1px solid #16A34A;">
+        <svg class="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <p class="text-xs" style="color: #334155;">
+          <strong style="color: #16A34A;">PWA Active!</strong> OS Notification + chime berfungsi walaupun app di-minimize.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <div id="pwaGuideModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.5);" onclick="closePwaGuide()">
+    <div class="max-w-lg w-full rounded-lg p-6" id="pwaGuideContent" style="background-color: #FFFFFF; border: 1px solid #E2E8F0;" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold flex items-center space-x-2" style="color: #0F172A;">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+          <span id="pwaGuideTitle">Panduan Install PWA</span>
+        </h3>
+        <button onclick="closePwaGuide()" class="p-1 rounded hover:opacity-70">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="space-y-4 text-sm" style="color: #334155;">
+        <div class="p-4 rounded-md" style="background-color: #EFF6FF;">
+          <p class="font-bold mb-2" style="color: #2563EB;">Kenapa perlu install PWA?</p>
+          <p>Browser block audio bila tab minimize. Dengan PWA, notification OS + bunyi native berfungsi walaupun app di-minimize.</p>
+        </div>
+        <div>
+          <p class="font-bold mb-2" style="color: #0F172A;">Cara Install (Chrome / Edge):</p>
+          <ol class="space-y-2 list-decimal list-inside">
+            <li>Klik ikon Install (⊕) di address bar, ATAU klik button INSTALL PWA.</li>
+            <li>Klik Install pada popup yang muncul.</li>
+            <li>App akan terbuka dalam window tersendiri (standalone mode).</li>
+            <li>Shortcut akan dibuat di desktop — buka dari situ.</li>
+          </ol>
+        </div>
+        <div class="p-3 rounded-md" style="background-color: #F0FDF4;">
+          <p class="text-xs" style="color: #16A34A;"><strong>✅ Selepas PWA:</strong> Notification popup + bunyi OS muncul walaupun app di-minimize.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings" class="border-b transition-colors duration-200 hidden" style="border-color: #E2E8F0; background-color: #FFFFFF;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold" style="color: #0F172A;">Data Source Settings</h3>
+        <button onclick="toggleSettings()" class="p-1 rounded hover:opacity-70">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: #334155;">Google Sheets URL</label>
+          <input type="text" id="sheetUrlInput" class="w-full px-3 py-2 border rounded-md text-sm" style="border-color: #E2E8F0; color: #0F172A; background-color: #FFFFFF;" placeholder="https://docs.google.com/spreadsheets/d/..." />
+          <p class="text-xs mt-1" style="color: #64748B;">Auto-sync setiap 5 saat</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: #334155;">Google Apps Script URL (Pilihan)</label>
+          <input type="text" id="scriptUrlInput" class="w-full px-3 py-2 border rounded-md text-sm" style="border-color: #E2E8F0; color: #0F172A; background-color: #FFFFFF;" placeholder="https://script.google.com/macros/s/..." />
+          <p class="text-xs mt-1" style="color: #64748B;">Jika kosong, sistem guna CSV export</p>
+        </div>
+      </div>
+      <div class="mt-4 p-3 rounded-md" style="background-color: #F0FDF4;">
+        <p class="text-xs font-semibold mb-1" style="color: #16A34A;">TTS Percuma — Tanpa API Key</p>
+        <p class="text-xs" style="color: #334155;">Menggunakan Web Speech API bawaan pelayar (browser TTS). Bahasa Melayu: guna suara Malay jika tersedia. English: guna suara English. Klik pada header kad unit untuk dengar.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="debug" class="border-b transition-colors duration-200 hidden" style="border-color: #E2E8F0; background-color: #FFFFFF;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold" style="color: #0F172A;">Debug: Raw CSV Data (10 rows)</h3>
+        <button onclick="toggleDebug()" class="p-1 rounded hover:opacity-70">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs" style="border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid #E2E8F0;">
+              <th style="padding: 6px 8px; text-align: left; color: #64748B;">Row</th>
+              <th style="padding: 6px 8px; text-align: left; color: #64748B;">Cols</th>
+              <th style="padding: 6px 8px; text-align: left; color: #2563EB;">A (Unit)</th>
+              <th style="padding: 6px 8px; text-align: left; color: #64748B;">B (Drip)</th>
+              <th style="padding: 6px 8px; text-align: left; color: #64748B;">C (Bukan Ubat)</th>
+              <th style="padding: 6px 8px; text-align: left; color: #D97706;">D (Jumlah Troli)</th>
+              <th style="padding: 6px 8px; text-align: left; color: #16A34A;">E (Perlu Troli?)</th>
+            </tr>
+          </thead>
+          <tbody id="debugRows">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="error" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 hidden">
+    <div class="p-4 rounded-md flex items-start" style="background-color: #FEE2E2; border: 1px solid #DC2626;">
+      <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+      <div>
+        <p class="font-medium" style="color: #DC2626;">Ralat: <span id="errorText"></span></p>
+        <p class="text-sm mt-1" style="color: #DC2626; opacity: 0.8;">Pastikan Google Sheets adalah public.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="summary" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 hidden">
+    <div class="rounded-lg border transition-colors duration-200" style="background-color: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold" style="color: #0F172A;">Ringkasan</h2>
+          <span class="text-xs font-medium" style="color: #64748B;">Kemas kini: <span id="summaryUpdated"></span></span>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="p-4 rounded-md" style="background-color: #EFF6FF;">
+            <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: #2563EB;">Jumlah Unit</p>
+            <p class="text-3xl font-bold" style="color: #2563EB;" id="totalUnits">0</p>
+          </div>
+          <div class="p-4 rounded-md" style="background-color: #F0FDF4;">
+            <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: #16A34A;">Sedia Diambil</p>
+            <p class="text-3xl font-bold" style="color: #16A34A;" id="readyCount">0</p>
+          </div>
+          <div class="p-4 rounded-md" style="background-color: #FEF3C7;">
+            <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: #D97706;">Jumlah Troli</p>
+            <p class="text-3xl font-bold" style="color: #D97706;" id="totalTroli">0</p>
+          </div>
+          <div class="p-4 rounded-md" style="background-color: #E0E7FF;">
+            <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: #7C3AED;">Perlu Troli</p>
+            <p class="text-3xl font-bold" style="color: #7C3AED;" id="totalPerlu">0</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="loading" class="text-center py-12">
+      <svg class="w-8 h-8 mx-auto animate-spin mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      <p class="text-sm" style="color: #64748B;">Memuatkan data...</p>
+    </div>
+    <div id="unitsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+    </div>
+  </main>
+
+  <div class="fixed top-4 right-4 z-50 space-y-3 pointer-events-none" style="max-width: 360px; width: calc(100vw - 32px);" id="floatingNotifs">
+  </div>
+
+  <script>
+    const LIGHT = {
+      bg: '#F8F9FA', surface: '#FFFFFF', ink: '#0F172A', ink2: '#334155', ink3: '#64748B',
+      border: '#E2E8F0', accent: '#2563EB', accent2: '#7C3AED', accentSoft: '#EFF6FF',
+      green: '#16A34A', greenSoft: '#F0FDF4', red: '#DC2626', redSoft: '#FEE2E2',
+      amber: '#D97706', amberSoft: '#FEF3C7', gray: '#64748B', graySoft: '#F1F5F9',
+      headerBar: '#0F172A', inputBg: '#FFFFFF', shadow: '0 1px 3px rgba(0,0,0,0.06)'
+    };
+    const DARK = {
+      bg: '#0F172A', surface: '#1E293B', ink: '#F1F5F9', ink2: '#CBD5E1', ink3: '#94A3B8',
+      border: '#334155', accent: '#3B82F6', accent2: '#A78BFA', accentSoft: '#1E3A5F',
+      green: '#22C55E', greenSoft: '#14532D', red: '#EF4444', redSoft: '#450A0A',
+      amber: '#F59E0B', amberSoft: '#78350F', gray: '#94A3B8', graySoft: '#1E293B',
+      headerBar: '#020617', inputBg: '#0F172A', shadow: '0 1px 3px rgba(0,0,0,0.3)'
+    };
+
+    const T = {
+      'Inden Sedia Diambil': { bm: 'Inden Sedia Diambil', en: 'Indent Ready For Collection' },
+      'Inden Sedang Diproses': { bm: 'Inden Sedang Diproses', en: 'Indent Being Processed' },
+      'Inden Baru Diterima': { bm: 'Inden Baru Diterima', en: 'Indent Newly Received' },
+      'Inden Belum Diterima': { bm: 'Inden Belum Diterima', en: 'Indent Not Yet Received' },
+      'Tiada Data': { bm: 'Tiada Data', en: 'No Data' },
+      'UFL Inden Monitor': { bm: 'UFL Inden Monitor', en: 'UFL Indent Monitor' },
+      'LIVE': { bm: 'LANGSUNG', en: 'LIVE' },
+      'Ringkasan': { bm: 'Ringkasan', en: 'Summary' },
+      'Jumlah Unit': { bm: 'Jumlah Unit', en: 'Total Units' },
+      'Sedia Diambil': { bm: 'Sedia Diambil', en: 'Ready For Collection' },
+      'Jumlah Troli': { bm: 'Jumlah Troli', en: 'Total Trolleys' },
+      'Perlu Troli': { bm: 'Perlu Troli', en: 'Need Trolleys' },
+      'Perlu Troli?': { bm: 'Perlu Troli?', en: 'Need Trolleys?' },
+      'Drip': { bm: 'Drip', en: 'Drip' },
+      'Bukan Ubat': { bm: 'Bukan Ubat', en: 'Non-Drug' },
+      'Ya': { bm: 'Ya', en: 'Yes' },
+      'Tidak': { bm: 'Tidak', en: 'No' },
+      'Memuatkan data...': { bm: 'Memuatkan data...', en: 'Loading data...' },
+      'Kemas kini': { bm: 'Kemas kini', en: 'Updated' },
+      'Status Berubah': { bm: 'Status Berubah', en: 'Status Changed' },
+      'Status Inden Dikemaskini': { bm: 'Status Inden Dikemaskini', en: 'Indent Status Updated' },
+      'Data Source Settings': { bm: 'Tetapan Sumber Data', en: 'Data Source Settings' },
+      'Google Sheets URL': { bm: 'Google Sheets URL', en: 'Google Sheets URL' },
+      'Google Apps Script URL (Optional)': { bm: 'Google Apps Script URL (Pilihan)', en: 'Google Apps Script URL (Optional)' },
+      'Auto-sync setiap 5 saat': { bm: 'Auto-sync setiap 5 saat', en: 'Auto-sync every 5 seconds' },
+      'Jika kosong, sistem guna CSV export': { bm: 'Jika kosong, sistem guna CSV export', en: 'If empty, system uses CSV export' },
+      'Debug: Raw CSV Data (10 rows)': { bm: 'Debug: Data CSV Mentah (10 baris)', en: 'Debug: Raw CSV Data (10 rows)' },
+      'Panduan Install PWA': { bm: 'Panduan Install PWA', en: 'PWA Installation Guide' },
+      'Untuk notification + chime berfungsi walaupun tab minimize/close:': { bm: 'Untuk notification + chime berfungsi walaupun tab minimize/close:', en: 'For notification + chime to work even when tab is minimized/closed:' },
+      'PWA Active!': { bm: 'PWA Aktif!', en: 'PWA Active!' },
+      'INSTALL PWA': { bm: 'INSTALL PWA', en: 'INSTALL PWA' },
+      'PWA GUIDE': { bm: 'PANDUAN PWA', en: 'PWA GUIDE' },
+      'PWA': { bm: 'PWA', en: 'PWA' },
+    };
+
+    function tr(text, lang) {
+      if (!text) return text;
+      if (T[text] && T[text][lang]) return T[text][lang];
+      return text;
+    }
+
+    function extractSheetId(url) {
+      const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      return m ? m[1] : '';
+    }
+    function buildCsvUrl(sheetUrl) {
+      const id = extractSheetId(sheetUrl);
+      return id ? `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=DATA` : '';
+    }
+    function parseCsv(text) {
+      const rows = []; let cur = []; let cell = ''; let q = false; let i = 0;
+      while (i < text.length) {
+        const ch = text[i];
+        if (q) {
+          if (ch === '"') { if (text[i+1] === '"') { cell += '"'; i += 2; continue; } else { q = false; i++; continue; } }
+          else { cell += ch; i++; continue; }
+        } else {
+          if (ch === '"') { q = true; i++; continue; }
+          else if (ch === ',') { cur.push(cell.trim()); cell = ''; i++; continue; }
+          else if (ch === '\n') { cur.push(cell.trim()); rows.push(cur); cur = []; cell = ''; i++; continue; }
+          else if (ch === '\r') { i++; continue; }
+          else { cell += ch; i++; continue; }
+        }
+      }
+      if (cell.length > 0 || cur.length > 0) { cur.push(cell.trim()); rows.push(cur); }
+      return rows;
+    }
+
+    const VALID_STATUSES_BM = ['Inden Sedia Diambil', 'Inden Sedang Diproses', 'Inden Baru Diterima'];
+
+    function getStatusInfo(status, C, lang) {
+      const displayStatus = lang === 'en' ? (() => {
+        for (const k of VALID_STATUSES_BM) { if (status === k) return tr(k, 'en'); }
+        return tr(status, 'en');
+      })() : status;
+      switch (status) {
+        case 'Inden Sedia Diambil': return { bg: C.green, text: '#FFFFFF', icon: 'check', label: displayStatus };
+        case 'Inden Sedang Diproses': return { bg: C.amber, text: '#FFFFFF', icon: 'clock', label: displayStatus };
+        case 'Inden Baru Diterima': return { bg: C.accent, text: '#FFFFFF', icon: 'package', label: displayStatus };
+        case 'Inden Belum Diterima': return { bg: C.gray, text: '#FFFFFF', icon: 'alert', label: displayStatus };
+        default: return { bg: C.graySoft, text: C.gray, icon: 'alert', label: displayStatus || tr('Tiada Data', lang) };
+      }
+    }
+
+    function createStatusBadge(status, C, lang) {
+      const info = getStatusInfo(status, C, lang);
+      let iconSvg = '';
+      if (info.icon === 'check') iconSvg = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+      else if (info.icon === 'clock') iconSvg = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>';
+      else if (info.icon === 'package') iconSvg = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>';
+      else iconSvg = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>';
+      return `<div class="flex items-center justify-center space-x-2 py-2.5 px-4 rounded-md" style="background-color: ${info.bg}; color: ${info.text};">${iconSvg}<span class="text-xs font-bold uppercase tracking-wide">${info.label}</span></div>`;
+    }
+
+    let units = {};
+    let lastUpdated = new Date();
+    let isLoading = false;
+    let error = null;
+    let sheetUrl = 'https://docs.google.com/spreadsheets/d/1m6D6POkxoEGPr0n8X4N2xv3nC5j0rxvsML02tGkK1to/edit?usp=sharing';
+    let scriptUrl = '';
+    let showSettings = false;
+    let showDebug = false;
+    let debugRows = [];
+    let theme = localStorage.getItem('ufl-theme') || 'light';
+    let lang = localStorage.getItem('ufl-lang') || 'bm';
+    let prevStatusesRef = {};
+    let floatingNotifs = [];
+    let notifIdRef = 0;
+    let audioCtxRef = null;
+    let swRegistrationRef = null;
+    let soundEnabled = localStorage.getItem('ufl-sound') !== 'off';
+    let audioUnlocked = false;
+    let notifPermission = 'default';
+    let isInstalled = false;
+    let installPromptEvent = null;
+    let showPwaGuide = false;
+    let speakingUnit = null;
+
+    const CHIME_WAV = (() => {
+      const sr = 22050, dur = 0.5, n = Math.floor(sr * dur);
+      const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+      const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o+i, s.charCodeAt(i)); };
+      ws(0,'RIFF'); v.setUint32(4,36+n*2,true); ws(8,'WAVE'); ws(12,'fmt ');
+      v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+      v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true);
+      v.setUint16(34,16,true); ws(36,'data'); v.setUint32(40,n*2,true);
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        const s = t < 0.2 ? Math.sin(2*Math.PI*659.25*t)*Math.exp(-t*8)*0.5 : Math.sin(2*Math.PI*783.99*t)*Math.exp(-(t-0.2)*6)*0.5;
+        v.setInt16(44+i*2, s*32767, true);
+      }
+      let b = ''; const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) b += String.fromCharCode(bytes[i]);
+      return 'data:audio/wav;base64,' + btoa(b);
+    })();
+
+    function unlockAudio() {
+      try {
+        if (!audioCtxRef) audioCtxRef = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = audioCtxRef;
+        if (ctx.state === 'suspended') { ctx.resume().then(() => audioUnlocked = true).catch(() => {}); }
+        else audioUnlocked = true;
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.01);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.02);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.02);
+      } catch(e) {}
+      try {
+        const f = new Audio(CHIME_WAV); f.volume = 1.0; f.play().then(() => { f.pause(); f.currentTime = 0; }).catch(() => {});
+      } catch(e2) {}
+    }
+
+    function playChime() {
+      try {
+        const f = new Audio(CHIME_WAV); f.volume = 1.0; f.play().catch(() => {});
+      } catch(e) {}
+      try { if ('vibrate' in navigator) navigator.vibrate([200,100,200]); } catch(e4) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('ufl-sound', soundEnabled ? 'on' : 'off');
+      updateSoundButton();
+      if (soundEnabled && 'Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(p => {
+          notifPermission = p;
+          if (p === 'granted' && swRegistrationRef) {
+            try {
+              swRegistrationRef.showNotification('🔔 UFL Inden Monitor', {
+                body: lang === 'en' ? 'Notification & chime AUTO-ACTIVATED!' : 'Notification & chime AUTO-AKTIF!',
+                tag: 'ufl-sound-' + Date.now(), silent: false, icon: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2232%22%20fill%3D%22%2316A34A%22%2F%3E%3Ctext%20x%3D%2296%22%20y%3D%22120%22%20font-size%3D%2272%22%20font-weight%3D%22Ym9sZCUyMg%3D%3D%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%22%3EUFL%3C%2Ftext%3E%3C%2Fsvg%3E'
+              });
+            } catch ( e) {}
+          }
+        });
+      }
+      if (soundEnabled) { unlockAudio(); }
+    }
+
+    function toggleLang() {
+      lang = lang === 'bm' ? 'en' : 'bm';
+      localStorage.setItem('ufl-lang', lang);
+      stopTTS();
+      updateUI();
+    }
+
+    let C = theme === 'dark' ? DARK : LIGHT;
+
+    // --- Browser Web Speech TTS (Free, no API key) ---
+    let ttsVoices = [];
+    function loadTtsVoices() {
+      if (!('speechSynthesis' in window)) return;
+      ttsVoices = window.speechSynthesis.getVoices() || [];
+    }
+    if ('speechSynthesis' in window) {
+      if ('onvoiceschanged' in window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = loadTtsVoices;
+      }
+      loadTtsVoices();
+    }
+
+    function getTtsLang() {
+      return lang === 'en' ? 'en-US' : 'ms-MY';
+    }
+
+    function findTtsVoice() {
+      const target = getTtsLang();
+      if (!ttsVoices.length) return null;
+      let v = ttsVoices.find(voice => voice.lang.toLowerCase() === target.toLowerCase());
+      if (v) return v;
+      v = ttsVoices.find(voice => voice.lang.toLowerCase().startsWith(target.split('-')[0]));
+      if (v) return v;
+      if (lang === 'bm') {
+        v = ttsVoices.find(voice => /malay|melayu|ms/i.test(voice.name + ' ' + voice.lang));
+      } else {
+        v = ttsVoices.find(voice => voice.lang.toLowerCase().startsWith('en'));
+      }
+      return v || ttsVoices[0];
+    }
+
+    function splitTextForTTS(text) {
+      const max = 180;
+      if (text.length <= max) return [text];
+      const parts = [];
+      let cur = '';
+      const re = /[^.!?]+[.!?]+|[^.!?]+$/g;
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        const s = m[0].trim();
+        if (!s) continue;
+        if ((cur + ' ' + s).trim().length <= max) {
+          cur = cur ? cur + ' ' + s : s;
+        } else {
+          if (cur) parts.push(cur);
+          if (s.length > max) {
+            while (s.length > max) { parts.push(s.substring(0, max)); s = s.substring(max); }
+            cur = s;
+          } else { cur = s; }
+        }
+      }
+      if (cur) parts.push(cur);
+      return parts.length ? parts : [text];
+    }
+
+    function stopTTS() {
+      speakingUnit = null;
+      try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e) {}
+      updateUI();
+    }
+
+    function speakNext(parts) {
+      if (!parts || parts.length === 0 || !speakingUnit) {
+        speakingUnit = null;
+        updateUI();
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(parts[0]);
+      const voice = findTtsVoice();
+      if (voice) u.voice = voice;
+      u.lang = getTtsLang();
+      u.rate = 0.95; u.pitch = 1;
+      u.onend = () => {
+        parts.shift();
+        speakNext(parts);
+      };
+      u.onerror = () => {
+        speakingUnit = null;
+        updateUI();
+      };
+      window.speechSynthesis.speak(u);
+    }
+
+    function speakUnitCard(unitName, unit) {
+      if (speakingUnit === unitName) { stopTTS(); return; }
+      stopTTS();
+      speakingUnit = unitName;
+      updateUI();
+
+      const dripStatus = unit.drip ? tr(unit.drip.status || 'Tiada Data', lang) : tr('Tiada Data', lang);
+      const bukanUbatStatus = unit.bukanUbat ? tr(unit.bukanUbat.status || 'Tiada Data', lang) : tr('Tiada Data', lang);
+      const jumlahTroli = unit.jumlahTroli ?? 0;
+      const perluTroli = tr(unit.perluTroli || 'Tidak', lang);
+      let text;
+      if (lang === 'en') {
+        text = `Unit ${unitName}. Drip status: ${dripStatus}. Non drug status: ${bukanUbatStatus}. Total trolleys: ${jumlahTroli}. Need trolleys: ${perluTroli}.`;
+      } else {
+        text = `Unit ${unitName}. Status Inden Drip: ${dripStatus}. Status Inden Bukan Ubat: ${bukanUbatStatus}. Jumlah Troli: ${jumlahTroli}. Perlu Troli: ${perluTroli}.`;
+      }
+      const parts = splitTextForTTS(text);
+      speakNext(parts);
+    }
+
+    function addFloatingNotif(unit, cat, oldS, newS) {
+      const id = ++notifIdRef;
+      floatingNotifs = [{id, unit, category: cat, oldStatus: oldS, newStatus: newS, timestamp: new Date()}, ...floatingNotifs].slice(0, 5);
+      updateFloatingNotifs();
+      setTimeout(() => { floatingNotifs = floatingNotifs.filter(n => n.id !== id); updateFloatingNotifs(); }, 8000);
+    }
+
+    function dismissNotif(id) {
+      floatingNotifs = floatingNotifs.filter(n => n.id !== id);
+      updateFloatingNotifs();
+    }
+
+    function toggleTheme() {
+      theme = theme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('ufl-theme', theme);
+      C = theme === 'dark' ? DARK : LIGHT;
+      updateUI();
+    }
+
+    function showNotification(title, body) {
+      if (!('Notification' in window)) return;
+      const fire = () => {
+        if (swRegistrationRef) {
+          try {
+            swRegistrationRef.showNotification(title, {
+              body, tag: 'ufl-'+Date.now(), requireInteraction: true, renotify: true,
+              silent: false, vibrate: [200,100,200,100,200], icon: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2232%22%20fill%3D%22%2316A34A%22%2F%3E%3Ctext%20x%3D%2296%22%20y%3D%22120%22%20font-size%3D%2272%22%20font-weight%3D%22Ym9sZCUyMg%3D%3D%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%22%3EUFL%3C%2Ftext%3E%3C%2Fsvg%3E', data: {url:'/'}
+            });
+            return;
+          } catch(e) {}
+        }
+        try {
+          const n = new Notification(title, { body, tag: 'ufl-'+Date.now(), requireInteraction: true, silent: false, icon: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2232%22%20fill%3D%22%2316A34A%22%2F%3E%3Ctext%20x%3D%2296%22%20y%3D%22120%22%20font-size%3D%2272%22%20font-weight%3D%22Ym9sZCUyMg%3D%3D%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%22%3EUFL%3C%2Ftext%3E%3C%2Fsvg%3E' });
+          n.onclick = () => { window.focus(); n.close(); };
+          setTimeout(() => { try { n.close(); } catch(e){} }, 10000);
+        } catch(e) {}
+      };
+      if (Notification.permission === 'granted') { fire(); }
+      else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(p => { notifPermission = p; fire(); });
+      } else { fire(); }
+    }
+
+    async function fetchData() {
+      isLoading = true;
+      error = null;
+      updateUI();
+      try {
+        let resultData = null;
+        if (scriptUrl && scriptUrl.trim()) {
+          try { const r = await fetch(scriptUrl, { redirect: 'follow' }); if (r.ok) { const j = await r.json(); if (j && j.data) resultData = j.data; } } catch(e) {}
+        }
+        if (!resultData) {
+          const csvUrl = buildCsvUrl(sheetUrl);
+          if (!csvUrl) throw new Error(lang === 'en' ? 'Invalid Google Sheets URL' : 'URL Google Sheets tidak sah');
+          const r = await fetch(csvUrl, { keepalive: true });
+          if (!r.ok) throw new Error(lang === 'en' ? 'Failed to fetch spreadsheet data' : 'Gagal mendapatkan data spreadsheet');
+          const rows = parseCsv(await r.text());
+          if (rows.length < 2) throw new Error(lang === 'en' ? 'No data rows found in sheet' : 'Tiada baris data dijumpai dalam sheet');
+          debugRows = rows.slice(0, 10).map((r, i) => ({ csvRow: i, colCount: r.length, A: r[0]||'', B: r[1]||'', C: r[2]||'', D: r[3]||'', E: r[4] !== undefined ? r[4] : '' }));
+          const parsed = {};
+          for (let r = 0; r < rows.length; r++) {
+            const row = rows[r]; if (!row || row.length === 0) continue;
+            while (row.length < 5) row.push('');
+            const u = (row[0]||'').trim(); if (!u) continue;
+            const ln = u.toLowerCase(); if (ln.includes('nama') || ln === 'unit' || ln.includes('header')) continue;
+            const drip = (row[1]||'').trim(), bu = (row[2]||'').trim();
+            const jRaw = (row[3]||'').toString().trim().replace(/[^0-9-]/g,'');
+            const pRaw = (row[4] !== undefined ? row[4] : '').toString().trim();
+            const pHas = pRaw !== '' && pRaw !== '0' && pRaw.toLowerCase() !== 'tidak' && pRaw.toLowerCase() !== 'no';
+            parsed[u] = { drip: {status: drip}, bukanUbat: {status: bu}, jumlahTroli: jRaw !== '' ? parseInt(jRaw) : 0, perluTroli: pHas ? 'Ya' : 'Tidak' };
+          }
+          const filtered = {};
+          Object.keys(parsed).forEach(u => {
+            const d = parsed[u];
+            if ((d.drip && VALID_STATUSES_BM.includes(d.drip.status)) || (d.bukanUbat && VALID_STATUSES_BM.includes(d.bukanUbat.status))) filtered[u] = d;
+          });
+          if (Object.keys(filtered).length === 0) throw new Error(lang === 'en' ? 'No units with valid status found' : 'Tiada unit dengan status sah dijumpai');
+          resultData = filtered;
+        }
+
+        const prev = prevStatusesRef, newS = {};
+        Object.keys(resultData).forEach(unit => {
+          const ud = resultData[unit];
+          ['drip','bukanUbat'].forEach(cat => {
+            const key = `${unit}-${cat}`, cs = ud[cat] ? ud[cat].status : '';
+            newS[key] = cs;
+            if (prev[key] !== undefined && prev[key] !== cs && cs) {
+              const cl = cat === 'drip' ? tr('Drip', lang) : tr('Bukan Ubat', lang);
+              const nTitle = tr('Status Inden Dikemaskini', lang);
+              const nBody = `${unit} — ${cl}: ${tr(cs, lang)}`;
+              showNotification(nTitle, nBody);
+              addFloatingNotif(unit, cl, tr(prev[key], lang), tr(cs, lang));
+              playChime();
+            }
+          });
+        });
+        prevStatusesRef = newS;
+        units = resultData; lastUpdated = new Date();
+      } catch (err) { error = err.message; }
+      finally { isLoading = false; updateUI(); }
+    }
+
+    function toggleSettings() {
+      showSettings = !showSettings;
+      document.getElementById('settings').classList.toggle('hidden', !showSettings);
+    }
+
+    function toggleDebug() {
+      showDebug = !showDebug;
+      document.getElementById('debug').classList.toggle('hidden', !showDebug);
+    }
+
+    function togglePwaGuide() {
+      showPwaGuide = !showPwaGuide;
+      document.getElementById('pwaGuideModal').classList.toggle('hidden', !showPwaGuide);
+    }
+
+    function closePwaGuide() {
+      showPwaGuide = false;
+      document.getElementById('pwaGuideModal').classList.toggle('hidden', true);
+    }
+
+    function handleInstallPwa() {
+      if (!installPromptEvent) return;
+      installPromptEvent.prompt();
+      installPromptEvent.userChoice.then(c => { if (c.outcome === 'accepted') isInstalled = true; installPromptEvent = null; updateInstallUI(); });
+    }
+
+    function updateInstallUI() {
+      document.getElementById('installButton').classList.toggle('hidden', isInstalled || !installPromptEvent);
+      document.getElementById('pwaGuideButton').classList.toggle('hidden', isInstalled);
+      document.getElementById('pwaBadge').classList.toggle('hidden', !isInstalled);
+      document.getElementById('pwaInstallMessage').classList.toggle('hidden', isInstalled);
+      document.getElementById('pwaActiveMessage').classList.toggle('hidden', !isInstalled);
+    }
+
+    function updateSoundButton() {
+      const btn = document.getElementById('soundButton');
+      btn.innerHTML = soundEnabled ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>' : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
+      btn.style.backgroundColor = soundEnabled ? C.greenSoft : C.accentSoft;
+    }
+
+    function updateUI() {
+      document.getElementById('body').style.backgroundColor = C.bg;
+      document.getElementById('header').style.backgroundColor = C.surface;
+      document.getElementById('header').style.borderColor = C.border;
+      document.getElementById('title').style.color = C.ink;
+      document.getElementById('title').innerText = tr('UFL Inden Monitor', lang);
+      document.getElementById('langButton').style.backgroundColor = lang === 'bm' ? C.accentSoft : C.amberSoft;
+      document.getElementById('langLabel').innerText = lang === 'bm' ? 'BM' : 'EN';
+      document.getElementById('langButton').querySelector('svg').style.color = lang === 'bm' ? C.accent : C.amber;
+      document.getElementById('lastUpdatedTime').innerText = lastUpdated.toLocaleTimeString();
+      updateSoundButton();
+      document.getElementById('pwaGuideTitle').innerText = tr('Panduan Install PWA', lang);
+      if (error) {
+        document.getElementById('error').classList.remove('hidden');
+        document.getElementById('errorText').innerText = error;
+      } else {
+        document.getElementById('error').classList.add('hidden');
+      }
+      if (Object.keys(units).length > 0) {
+        document.getElementById('summary').classList.remove('hidden');
+        document.getElementById('summary').querySelector('h2').innerText = tr('Ringkasan', lang);
+        document.getElementById('summaryUpdated').innerText = lastUpdated.toLocaleTimeString();
+        const unitList = Object.keys(units).sort((a, b) => {
+          const aReady = (units[a]?.drip?.status === 'Inden Sedia Diambil') || (units[a]?.bukanUbat?.status === 'Inden Sedia Diambil');
+          const bReady = (units[b]?.drip?.status === 'Inden Sedia Diambil') || (units[b]?.bukanUbat?.status === 'Inden Sedia Diambil');
+          if (aReady && !bReady) return -1;
+          if (!aReady && bReady) return 1;
+          return a.localeCompare(b, 'ms', { sensitivity: 'base' });
+        });
+        const totalTroli = unitList.reduce((s, u) => s + (units[u].jumlahTroli || 0), 0);
+        const totalPerlu = unitList.filter(u => units[u].perluTroli === 'Ya').length;
+        const readyCount = unitList.filter(u => { const d = units[u]; return (d.drip && d.drip.status === 'Inden Sedia Diambil') || (d.bukanUbat && d.bukanUbat.status === 'Inden Sedia Diambil'); }).length;
+        document.getElementById('totalUnits').innerText = unitList.length;
+        document.getElementById('readyCount').innerText = readyCount;
+        document.getElementById('totalTroli').innerText = totalTroli;
+        document.getElementById('totalPerlu').innerText = totalPerlu;
+        document.getElementById('unitsGrid').innerHTML = unitList.map(unitName => {
+          const unit = units[unitName];
+          const perluDisplay = tr(unit.perluTroli || 'Tidak', lang);
+          const hasSediaDiambil = (unit.drip && unit.drip.status === 'Inden Sedia Diambil') || (unit.bukanUbat && unit.bukanUbat.status === 'Inden Sedia Diambil');
+          const isSpeaking = speakingUnit === unitName;
+          return `<div class="rounded-lg border overflow-hidden transition-colors duration-200 ${hasSediaDiambil?'neon-green-border':''}" style="background-color: ${C.surface}; border-color: ${hasSediaDiambil ? C.green : C.border}; box-shadow: ${hasSediaDiambil ? '0 0 10px rgba(22,163,74,0.5)' : C.shadow};">
+            <div class="px-5 py-3 flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity ${isSpeaking?'opacity-95':''}" style="background-color: ${C.headerBar};" onclick="speakUnitCard('${unitName}', units['${unitName}'])" title="${lang === 'en' ? 'Click to read aloud' : 'Klik untuk baca dengan suara'}">
+              <h2 class="text-lg font-bold text-white tracking-wide flex items-center space-x-2">
+                <span>${unitName}</span>
+                ${isSpeaking ? '<span class="flex items-end space-x-0.5 h-4 ml-2"><span class="sound-bar w-1 bg-white rounded-full h-2"></span><span class="sound-bar w-1 bg-white rounded-full h-3"></span><span class="sound-bar w-1 bg-white rounded-full h-2"></span><span class="sound-bar w-1 bg-white rounded-full h-4"></span></span>' : '<svg class="w-4 h-4 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>'}
+              </h2>
+            </div>
+            <div class="p-5 space-y-4">
+              <div>
+                <div class="flex items-center space-x-2 mb-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: ${C.accent};"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0016.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 002 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"></path></svg>
+                  <span class="text-xs font-semibold uppercase tracking-wide" style="color: ${C.ink3};">${tr('Drip', lang)}</span>
+                </div>
+                ${createStatusBadge(unit.drip ? unit.drip.status : '', C, lang)}
+              </div>
+              <div>
+                <div class="flex items-center space-x-2 mb-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: ${C.accent2};"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  <span class="text-xs font-semibold uppercase tracking-wide" style="color: ${C.ink3};">${tr('Bukan Ubat', lang)}</span>
+                </div>
+                ${createStatusBadge(unit.bukanUbat ? unit.bukanUbat.status : '', C, lang)}
+              </div>
+              <div class="pt-3 border-t" style="border-color: ${C.border};">
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="text-center p-3 rounded-md" style="background-color: ${C.accentSoft};">
+                    <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: ${C.accent};">${tr('Jumlah Troli', lang)}</p>
+                    <p class="text-2xl font-bold" style="color: ${C.accent};">${unit.jumlahTroli ?? 0}</p>
+                  </div>
+                  <div class="text-center p-3 rounded-md" style="background-color: ${C.amberSoft};">
+                    <p class="text-xs font-semibold uppercase tracking-wide mb-1" style="color: ${C.amber};">${tr('Perlu Troli?', lang)}</p>
+                    <p class="text-2xl font-bold" style="color: ${C.amber};">${perluDisplay}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+        document.getElementById('unitsGrid').classList.remove('hidden');
+        document.getElementById('loading').classList.add('hidden');
+      } else {
+        document.getElementById('summary').classList.add('hidden');
+        document.getElementById('unitsGrid').classList.add('hidden');
+        if (!isLoading) document.getElementById('loading').classList.remove('hidden');
+      }
+      if (showDebug) {
+        document.getElementById('debugRows').innerHTML = debugRows.map((r, i) => `
+          <tr style="border-bottom: 1px solid ${C.border};">
+            <td style="padding: 6px 8px; color: ${C.ink3}; font-family: monospace;">${r.csvRow}</td>
+            <td style="padding: 6px 8px; color: ${C.ink3}; font-family: monospace;">${r.colCount}</td>
+            <td style="padding: 6px 8px; color: ${C.ink}; font-weight: 600;">${r.A||'—'}</td>
+            <td style="padding: 6px 8px; color: ${C.ink2};">${r.B||'—'}</td>
+            <td style="padding: 6px 8px; color: ${C.ink2};">${r.C||'—'}</td>
+            <td style="padding: 6px 8px; color: ${C.amber}; font-weight: 600;">${r.D||'—'}</td>
+            <td style="padding: 6px 8px; color: ${C.green}; font-weight: 600;">${r.E||'—'}</td>
+          </tr>
+        `).join('');
+      }
+      updateInstallUI();
+    }
+
+    function updateFloatingNotifs() {
+      document.getElementById('floatingNotifs').innerHTML = floatingNotifs.map(notif => {
+        const colors = getStatusInfo(notif.newStatus, C, lang);
+        let iconSvg = '';
+        if (colors.icon === 'check') iconSvg = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+        else if (colors.icon === 'clock') iconSvg = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>';
+        else if (colors.icon === 'package') iconSvg = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>';
+        else iconSvg = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>';
+        return `<div class="pointer-events-auto rounded-lg border overflow-hidden shadow-lg" style="background-color: ${C.surface}; border-color: ${C.border}; box-shadow: 0 8px 24px rgba(0,0,0,0.15); animation: slideInRight 0.3s ease-out;">
+          <div class="px-4 py-2 flex items-center justify-between" style="background-color: ${colors.bg};">
+            <div class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+              <span class="text-xs font-bold uppercase tracking-wide text-white">${tr('Status Berubah', lang)}</span>
+            </div>
+            <button onclick="dismissNotif(${notif.id})" class="hover:opacity-70">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+          <div class="p-4">
+            <div class="flex items-start space-x-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: ${colors.bg};">${iconSvg}</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold" style="color: ${C.ink};">${notif.unit}</p>
+                <p class="text-xs font-medium" style="color: ${C.ink3};">${notif.category}</p>
+                <div class="mt-2 flex items-center space-x-2 flex-wrap">
+                  ${notif.oldStatus ? `<span class="text-xs px-2 py-0.5 rounded" style="background-color: ${C.graySoft}; color: ${C.ink3};">${notif.oldStatus}</span>` : ''}
+                  <span class="text-xs" style="color: ${C.ink3};">→</span>
+                  <span class="text-xs px-2 py-0.5 rounded font-semibold" style="background-color: ${colors.bg}; color: #FFFFFF;">${notif.newStatus}</span>
+                </div>
+                <p class="text-xs mt-2" style="color: ${C.ink3};">${notif.timestamp.toLocaleTimeString()}</p>
+              </div>
+            </div>
+          </div>
+          <div style="height: 3px; background-color: ${C.border};"><div style="height: 100%; background-color: ${colors.bg}; animation: shrinkBar 8s linear forwards;"></div></div>
+        </div>`;
+      }).join('');
+    }
+
+    C = theme === 'dark' ? DARK : LIGHT;
+    document.getElementById('sheetUrlInput').value = sheetUrl;
+    document.getElementById('scriptUrlInput').value = scriptUrl;
+    updateUI();
+    fetchData();
+    setInterval(fetchData, 5000);
+
+    if ('serviceWorker' in navigator) {
+      const swCode = `self.addEventListener('install', function(e) { self.skipWaiting(); }); self.addEventListener('activate', function(e) { e.waitUntil(self.clients.claim()); }); self.addEventListener('message', function(event) { if (event.data && event.data.type === 'SHOW_NOTIF') { self.registration.showNotification(event.data.title || 'UFL Alert', { body: event.data.body || '', tag: 'ufl-' + Date.now(), requireInteraction: true, renotify: true, silent: false, vibrate: [200,100,200,100,200], icon: event.data.icon || '', data: { url: '/' } }); } if (event.data && event.data.type === 'KEEPALIVE') { if (event.source) event.source.postMessage({ type: 'ALIVE' }); } }); setInterval(function() { self.clients.matchAll(); }, 25000); self.addEventListener('notificationclick', function(event) { event.notification.close(); event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(cl) { if (cl.length > 0) cl[0].focus(); else self.clients.openWindow('/'); })); });`;
+      const sb = new Blob([swCode], { type: 'application/javascript' });
+      navigator.serviceWorker.register(URL.createObjectURL(sb)).then(r => { swRegistrationRef = r; }).catch(() => {});
+    }
+
+    const hBI = (e) => { e.preventDefault(); installPromptEvent = e; updateInstallUI(); };
+    window.addEventListener('beforeinstallprompt', hBI);
+    isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    window.addEventListener('appinstalled', () => { isInstalled = true; installPromptEvent = null; updateInstallUI(); });
+
+    const autoEnable = () => {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then(p => {
+          notifPermission = p;
+          if (p === 'granted' && swRegistrationRef) {
+            try {
+              swRegistrationRef.showNotification('🔔 UFL Inden Monitor', {
+                body: lang === 'en' ? 'Notification & chime AUTO-ACTIVATED!' : 'Notification & chime AUTO-AKTIF!',
+                tag: 'ufl-auto-' + Date.now(), silent: false, icon: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2232%22%20fill%3D%22%2316A34A%22%2F%3E%3Ctext%20x%3D%2296%22%20y%3D%22120%22%20font-size%3D%2272%22%20font-weight%3D%22Ym9sZCUyMg%3D%3D%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%22%3EUFL%3C%2Ftext%3E%3C%2Fsvg%3E'
+              });
+            } catch(e) {}
+          }
+        });
+      }
+      try {
+        if (!audioCtxRef) audioCtxRef = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtxRef.state === 'suspended') audioCtxRef.resume().then(() => audioUnlocked = true).catch(() => {});
+        else audioUnlocked = true;
+        const f = new Audio(CHIME_WAV); f.volume = 1.0; f.play().then(() => { f.pause(); f.currentTime = 0; }).catch(() => {});
+      } catch(e) {}
+      document.removeEventListener('click', autoEnable);
+      document.removeEventListener('keydown', autoEnable);
+      document.removeEventListener('touchstart', autoEnable);
+    };
+    document.addEventListener('click', autoEnable);
+    document.addEventListener('keydown', autoEnable);
+    document.addEventListener('touchstart', autoEnable);
+
+    setInterval(() => {
+      if (swRegistrationRef && swRegistrationRef.active) {
+        try { swRegistrationRef.active.postMessage({ type: 'KEEPALIVE' }); } catch(e) {}
+      }
+    }, 20000);
+  </script>
+</body>
+</html>
