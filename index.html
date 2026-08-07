@@ -441,6 +441,39 @@
       try { if ('vibrate' in navigator) navigator.vibrate([200,100,200]); } catch(e4) {}
     }
 
+    // Natural TTS voice selection
+    let ttsVoices = [];
+    function loadTtsVoices() {
+      if (!('speechSynthesis' in window)) return;
+      ttsVoices = window.speechSynthesis.getVoices() || [];
+    }
+    function getBestVoice(preferredLang) {
+      if (!ttsVoices.length) loadTtsVoices();
+      const isMs = preferredLang === 'bm';
+      const langTags = isMs ? ['ms-MY', 'ms', 'id-ID', 'id', 'in'] : ['en-US', 'en-GB', 'en'];
+      let candidates = ttsVoices.filter(v => langTags.some(tag => v.lang && v.lang.toLowerCase().startsWith(tag.toLowerCase())));
+      if (!candidates.length) candidates = ttsVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith(isMs ? 'm' : 'e'));
+      if (!candidates.length) candidates = ttsVoices.slice();
+      const name = n => (n || '').toLowerCase();
+      const score = v => {
+        let s = 0;
+        const n = name(v.name);
+        const local = v.localService;
+        const premium = /premium|enhanced|neural|natural|wavenet|azure/i.test(n);
+        const goodVendor = /google|microsoft|apple|samsung|amazon|azure/i.test(n);
+        const avoid = /default|fallback|compact|low quality|robot|espeak|festival/i.test(n);
+        if (premium) s += 100;
+        if (goodVendor) s += 60;
+        if (local) s += 20;
+        if (avoid) s -= 80;
+        if (isMs && /malay|indonesia/i.test(n)) s += 40;
+        if (!isMs && /samantha|alex|victoria|karen|daniel|moira|serena|google us english/i.test(n)) s += 40;
+        return s;
+      };
+      candidates.sort((a, b) => score(b) - score(a));
+      return candidates[0] || null;
+    }
+
     function speakUnitData(unitName) {
       if (!('speechSynthesis' in window)) return;
       const unit = units[unitName];
@@ -459,22 +492,19 @@
       const u = new SpeechSynthesisUtterance(text);
       u.rate = 0.95;
       u.pitch = 1;
-      const voices = window.speechSynthesis.getVoices();
-      let voice = null;
-      if (lang === 'bm') {
-        voice = voices.find(v => v.lang === 'ms-MY') || voices.find(v => v.lang.toLowerCase().startsWith('ms')) || voices.find(v => v.lang.toLowerCase().startsWith('id'));
-        u.lang = 'ms-MY';
-      } else {
-        voice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.toLowerCase().startsWith('en'));
-        u.lang = 'en-US';
+      u.lang = lang === 'bm' ? 'ms-MY' : 'en-US';
+      const voice = getBestVoice(lang);
+      if (voice) {
+        u.voice = voice;
+        u.lang = voice.lang || u.lang;
       }
-      if (voice) u.voice = voice;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     }
 
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => {};
+      loadTtsVoices();
+      window.speechSynthesis.onvoiceschanged = () => loadTtsVoices();
     }
 
     function toggleSound() {
