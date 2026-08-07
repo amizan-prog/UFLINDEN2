@@ -12,14 +12,6 @@
     @keyframes shrinkBar { from { width: 100%; } to { width: 0%; } }
     @keyframes neonGreenPulse { 0%,100% { box-shadow: 0 0 5px #16A34A, 0 0 10px #16A34A, 0 0 15px rgba(22,163,74,0.5); border-color: #16A34A; } 50% { box-shadow: 0 0 10px #16A34A, 0 0 20px #16A34A, 0 0 35px rgba(22,163,74,0.8); border-color: #22C55E; } }
     .neon-green-border { animation: neonGreenPulse 1.5s ease-in-out infinite; }
-    @keyframes soundWave {
-      0%, 100% { transform: scaleY(0.4); }
-      50% { transform: scaleY(1.2); }
-    }
-    .sound-bar { animation: soundWave 0.6s ease-in-out infinite; transform-origin: bottom; }
-    .sound-bar:nth-child(2) { animation-delay: 0.1s; }
-    .sound-bar:nth-child(3) { animation-delay: 0.2s; }
-    .sound-bar:nth-child(4) { animation-delay: 0.3s; }
   </style>
 </head>
 <body class="min-h-screen transition-colors duration-200" id="body" style="background-color: #F8F9FA;">
@@ -130,10 +122,6 @@
           <input type="text" id="scriptUrlInput" class="w-full px-3 py-2 border rounded-md text-sm" style="border-color: #E2E8F0; color: #0F172A; background-color: #FFFFFF;" placeholder="https://script.google.com/macros/s/..." />
           <p class="text-xs mt-1" style="color: #64748B;">Jika kosong, sistem guna CSV export</p>
         </div>
-      </div>
-      <div class="mt-4 p-3 rounded-md" style="background-color: #F0FDF4;">
-        <p class="text-xs font-semibold mb-1" style="color: #16A34A;">TTS Percuma — Tanpa API Key</p>
-        <p class="text-xs" style="color: #334155;">Menggunakan Web Speech API bawaan pelayar (browser TTS). Bahasa Melayu: guna suara Malay jika tersedia. English: guna suara English. Klik pada header kad unit untuk dengar.</p>
       </div>
     </div>
   </div>
@@ -269,10 +257,58 @@
       'PWA': { bm: 'PWA', en: 'PWA' },
     };
 
+    const UNIT_LONG_NAMES = {
+      'ICU': { bm: 'UNIT RAWATAN RAPI', en: 'INTENSIVE CARE UNIT' },
+      'W5A': { bm: 'WAD 5A(LELAKI)', en: 'WARD 5A (MALE)' },
+      'W6A': { bm: 'WAD PEMBEDAHAN 6A (PEREMPUAN)', en: 'SURGICAL WARD 6A (FEMALE)' },
+      'W6B': { bm: 'WAD RADIOTERAPI DAN ONKOLOGI 6B', en: 'RADIOTHERAPY AND ONCOLOGY WARD 6B' },
+      'W7A': { bm: 'WAD RADIOTERAPI & ONKOLOGI 7A (PEREMPUAN)', en: 'RADIOTHERAPY & ONCOLOGY WARD 7A (FEMALE)' },
+      'W7B': { bm: 'WAD RADIOTERAPI DAN ONKOLOGI 7B (PEREMPUAN)', en: 'RADIOTHERAPY AND ONCOLOGY WARD 7B (FEMALE)' },
+      'ADM': { bm: 'UNIT HASIL', en: 'REVENUE UNIT' },
+      'BOT': { bm: 'UNIT BRAKITERAPI', en: 'BRACHYTHERAPY UNIT' },
+      'CSSD': { bm: 'UNIT BEKALAN BAHAN STERIL', en: 'STERILE SUPPLY UNIT' },
+      'DCO': { bm: 'RAWATAN HARIAN ONKOLOGI', en: 'DAY CARE ONCOLOGY' },
+      'HNU': { bm: 'RAWATAN KANSER DI RUMAH', en: 'HOME CANCER CARE' },
+      'IFS': { bm: 'UNIT KAWALAN INFEKSI', en: 'INFECTION CONTROL UNIT' },
+      'GOT': { bm: 'DEWAN BEDAH UTAMA', en: 'MAIN OPERATING THEATRE' },
+      'PAT': { bm: 'PATOLOGI', en: 'PATHOLOGY' },
+      'PHY': { bm: 'FISIOLOGI', en: 'PHYSIOLOGY' },
+      'TCM': { bm: 'PERUBATAN TRADISIONAL & KOMPLIMENTARI', en: 'TRADITIONAL & COMPLEMENTARY MEDICINE' },
+      'IPC': { bm: 'FARMASI PESAKIT DALAM', en: 'INPATIENT PHARMACY' },
+      'UKA': { bm: 'UNIT KESIHATAN AWAM', en: 'PUBLIC HEALTH UNIT' },
+      'RKD': { bm: 'JABATAN REKOD', en: 'RECORDS DEPARTMENT' },
+      'PPD': { bm: 'PUSAT PENGAMBILAN DARAH', en: 'BLOOD DONATION CENTRE' },
+      'W8A': { bm: 'WAD RADIOTERAPI DAN ONKOLOGI 8A (LELAKI)', en: 'RADIOTHERAPY AND ONCOLOGY WARD 8A (MALE)' },
+      'W8B': { bm: 'WAD RADIOTERAPI DAN ONKOLOGI 8B (LELAKI)', en: 'RADIOTHERAPY AND ONCOLOGY WARD 8B (MALE)' },
+      'W9A': { bm: 'WAD MULTIDISIPLIN 9A', en: 'MULTIDISCIPLINARY WARD 9A' },
+      'W9B': { bm: 'WAD EKSEKUTIF 9B', en: 'EXECUTIVE WARD 9B' },
+      'DIET': { bm: 'DIETETIK DAN SAJIAN', en: 'DIETETICS AND CATERING' },
+      'ED': { bm: 'UNIT KECEMASAN KANSER', en: 'CANCER EMERGENCY UNIT' },
+      'MOR': { bm: 'MORTUARI/FORENSIK', en: 'MORTUARY/FORENSIC' },
+      'MDC': { bm: 'KLINIK MULTIDISIPLIN', en: 'MULTIDISCIPLINARY CLINIC' },
+      'NM189': { bm: 'PERUBATAN NUKLEAR', en: 'NUCLEAR MEDICINE' },
+      'NMC': { bm: 'KLINIK PERUBATAN NUKLEAR', en: 'NUCLEAR MEDICINE CLINIC' },
+      'ONC': { bm: 'KLINIK ONKOLOGI', en: 'ONCOLOGY CLINIC' },
+      'PETCT(F)': { bm: 'PETCT (FARMASI)', en: 'PETCT (PHARMACY)' },
+      'RADIO': { bm: 'RADIOLOGI', en: 'RADIOLOGY' },
+      'RTC': { bm: 'KLINIK RADIOTERAPI', en: 'RADIOTHERAPY CLINIC' },
+      'RTT': { bm: 'RAWATAN RADIOTERAPI', en: 'RADIOTHERAPY TREATMENT' },
+      'WRR': { bm: 'WAD RADIONUKLIK', en: 'RADIONUCLIDE WARD' },
+      'OPC': { bm: 'FARMASI PESAKAIT LUAR', en: 'OUTPATIENT PHARMACY' },
+      'CDR/TPN': { bm: 'REKONSTITUSI UBAT SITOTOKSIK DAN UNIT NUTRISI PARENTERAL', en: 'CYTOTOXIC DRUG RECONSTITUTION AND PARENTERAL NUTRITION UNIT' },
+      'PETCT(N)': { bm: 'PETCT (KEJURURAWATAN)', en: 'PETCT (NURSING)' }
+    };
+
     function tr(text, lang) {
       if (!text) return text;
       if (T[text] && T[text][lang]) return T[text][lang];
       return text;
+    }
+
+    function getUnitLongName(unitName) {
+      const key = unitName ? unitName.trim().toUpperCase() : '';
+      if (UNIT_LONG_NAMES[key]) return UNIT_LONG_NAMES[key][lang];
+      return unitName || '';
     }
 
     function extractSheetId(url) {
@@ -350,7 +386,6 @@
     let isInstalled = false;
     let installPromptEvent = null;
     let showPwaGuide = false;
-    let speakingUnit = null;
 
     const CHIME_WAV = (() => {
       const sr = 22050, dur = 0.5, n = Math.floor(sr * dur);
@@ -395,6 +430,42 @@
       try { if ('vibrate' in navigator) navigator.vibrate([200,100,200]); } catch(e4) {}
     }
 
+    function speakUnitData(unitName) {
+      if (!('speechSynthesis' in window)) return;
+      const unit = units[unitName];
+      if (!unit) return;
+      const longName = getUnitLongName(unitName);
+      const dripStatus = unit.drip ? tr(unit.drip.status, lang) : tr('Tiada Data', lang);
+      const buStatus = unit.bukanUbat ? tr(unit.bukanUbat.status, lang) : tr('Tiada Data', lang);
+      const jumlahTroli = unit.jumlahTroli ?? 0;
+      const perluTroli = tr(unit.perluTroli || 'Tidak', lang);
+      let text = '';
+      if (lang === 'bm') {
+        text = `${longName}. Status Drip: ${dripStatus}. Status Bukan Ubat: ${buStatus}. Jumlah Troli: ${jumlahTroli}. Perlu Troli: ${perluTroli}.`;
+      } else {
+        text = `${longName}. Drip status: ${dripStatus}. Non-drug status: ${buStatus}. Total trolleys: ${jumlahTroli}. Need trolley: ${perluTroli}.`;
+      }
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.95;
+      u.pitch = 1;
+      const voices = window.speechSynthesis.getVoices();
+      let voice = null;
+      if (lang === 'bm') {
+        voice = voices.find(v => v.lang === 'ms-MY') || voices.find(v => v.lang.toLowerCase().startsWith('ms')) || voices.find(v => v.lang.toLowerCase().startsWith('id'));
+        u.lang = 'ms-MY';
+      } else {
+        voice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.toLowerCase().startsWith('en'));
+        u.lang = 'en-US';
+      }
+      if (voice) u.voice = voice;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {};
+    }
+
     function toggleSound() {
       soundEnabled = !soundEnabled;
       localStorage.setItem('ufl-sound', soundEnabled ? 'on' : 'off');
@@ -416,117 +487,13 @@
     }
 
     function toggleLang() {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       lang = lang === 'bm' ? 'en' : 'bm';
       localStorage.setItem('ufl-lang', lang);
-      stopTTS();
       updateUI();
     }
 
     let C = theme === 'dark' ? DARK : LIGHT;
-
-    // --- Browser Web Speech TTS (Free, no API key) ---
-    let ttsVoices = [];
-    function loadTtsVoices() {
-      if (!('speechSynthesis' in window)) return;
-      ttsVoices = window.speechSynthesis.getVoices() || [];
-    }
-    if ('speechSynthesis' in window) {
-      if ('onvoiceschanged' in window.speechSynthesis) {
-        window.speechSynthesis.onvoiceschanged = loadTtsVoices;
-      }
-      loadTtsVoices();
-    }
-
-    function getTtsLang() {
-      return lang === 'en' ? 'en-US' : 'ms-MY';
-    }
-
-    function findTtsVoice() {
-      const target = getTtsLang();
-      if (!ttsVoices.length) return null;
-      let v = ttsVoices.find(voice => voice.lang.toLowerCase() === target.toLowerCase());
-      if (v) return v;
-      v = ttsVoices.find(voice => voice.lang.toLowerCase().startsWith(target.split('-')[0]));
-      if (v) return v;
-      if (lang === 'bm') {
-        v = ttsVoices.find(voice => /malay|melayu|ms/i.test(voice.name + ' ' + voice.lang));
-      } else {
-        v = ttsVoices.find(voice => voice.lang.toLowerCase().startsWith('en'));
-      }
-      return v || ttsVoices[0];
-    }
-
-    function splitTextForTTS(text) {
-      const max = 180;
-      if (text.length <= max) return [text];
-      const parts = [];
-      let cur = '';
-      const re = /[^.!?]+[.!?]+|[^.!?]+$/g;
-      let m;
-      while ((m = re.exec(text)) !== null) {
-        const s = m[0].trim();
-        if (!s) continue;
-        if ((cur + ' ' + s).trim().length <= max) {
-          cur = cur ? cur + ' ' + s : s;
-        } else {
-          if (cur) parts.push(cur);
-          if (s.length > max) {
-            while (s.length > max) { parts.push(s.substring(0, max)); s = s.substring(max); }
-            cur = s;
-          } else { cur = s; }
-        }
-      }
-      if (cur) parts.push(cur);
-      return parts.length ? parts : [text];
-    }
-
-    function stopTTS() {
-      speakingUnit = null;
-      try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e) {}
-      updateUI();
-    }
-
-    function speakNext(parts) {
-      if (!parts || parts.length === 0 || !speakingUnit) {
-        speakingUnit = null;
-        updateUI();
-        return;
-      }
-      const u = new SpeechSynthesisUtterance(parts[0]);
-      const voice = findTtsVoice();
-      if (voice) u.voice = voice;
-      u.lang = getTtsLang();
-      u.rate = 0.95; u.pitch = 1;
-      u.onend = () => {
-        parts.shift();
-        speakNext(parts);
-      };
-      u.onerror = () => {
-        speakingUnit = null;
-        updateUI();
-      };
-      window.speechSynthesis.speak(u);
-    }
-
-    function speakUnitCard(unitName, unit) {
-      if (speakingUnit === unitName) { stopTTS(); return; }
-      stopTTS();
-      speakingUnit = unitName;
-      updateUI();
-
-      const dripStatus = unit.drip ? tr(unit.drip.status || 'Tiada Data', lang) : tr('Tiada Data', lang);
-      const bukanUbatStatus = unit.bukanUbat ? tr(unit.bukanUbat.status || 'Tiada Data', lang) : tr('Tiada Data', lang);
-      const jumlahTroli = unit.jumlahTroli ?? 0;
-      const perluTroli = tr(unit.perluTroli || 'Tidak', lang);
-      let text;
-      if (lang === 'en') {
-        text = `Unit ${unitName}. Drip status: ${dripStatus}. Non drug status: ${bukanUbatStatus}. Total trolleys: ${jumlahTroli}. Need trolleys: ${perluTroli}.`;
-      } else {
-        text = `Unit ${unitName}. Status Inden Drip: ${dripStatus}. Status Inden Bukan Ubat: ${bukanUbatStatus}. Jumlah Troli: ${jumlahTroli}. Perlu Troli: ${perluTroli}.`;
-      }
-      const parts = splitTextForTTS(text);
-      speakNext(parts);
-    }
 
     function addFloatingNotif(unit, cat, oldS, newS) {
       const id = ++notifIdRef;
@@ -671,6 +638,10 @@
       btn.style.backgroundColor = soundEnabled ? C.greenSoft : C.accentSoft;
     }
 
+    function escapeHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
     function updateUI() {
       document.getElementById('body').style.backgroundColor = C.bg;
       document.getElementById('header').style.backgroundColor = C.surface;
@@ -711,13 +682,13 @@
           const unit = units[unitName];
           const perluDisplay = tr(unit.perluTroli || 'Tidak', lang);
           const hasSediaDiambil = (unit.drip && unit.drip.status === 'Inden Sedia Diambil') || (unit.bukanUbat && unit.bukanUbat.status === 'Inden Sedia Diambil');
-          const isSpeaking = speakingUnit === unitName;
+          const longName = getUnitLongName(unitName);
           return `<div class="rounded-lg border overflow-hidden transition-colors duration-200 ${hasSediaDiambil?'neon-green-border':''}" style="background-color: ${C.surface}; border-color: ${hasSediaDiambil ? C.green : C.border}; box-shadow: ${hasSediaDiambil ? '0 0 10px rgba(22,163,74,0.5)' : C.shadow};">
-            <div class="px-5 py-3 flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity ${isSpeaking?'opacity-95':''}" style="background-color: ${C.headerBar};" onclick="speakUnitCard('${unitName}', units['${unitName}'])" title="${lang === 'en' ? 'Click to read aloud' : 'Klik untuk baca dengan suara'}">
-              <h2 class="text-lg font-bold text-white tracking-wide flex items-center space-x-2">
-                <span>${unitName}</span>
-                ${isSpeaking ? '<span class="flex items-end space-x-0.5 h-4 ml-2"><span class="sound-bar w-1 bg-white rounded-full h-2"></span><span class="sound-bar w-1 bg-white rounded-full h-3"></span><span class="sound-bar w-1 bg-white rounded-full h-2"></span><span class="sound-bar w-1 bg-white rounded-full h-4"></span></span>' : '<svg class="w-4 h-4 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>'}
-              </h2>
+            <div class="px-5 py-3 flex flex-col items-center justify-center" style="background-color: ${C.headerBar};">
+              <h2 class="text-sm sm:text-base font-bold text-white tracking-wide text-center leading-tight cursor-pointer hover:opacity-90 transition-opacity select-none" onclick="speakUnitData('${escapeHtml(unitName)}')" title="${lang === 'bm' ? 'Klik untuk baca data unit' : 'Click to read unit data'}">${escapeHtml(longName || unitName)}</h2>
+              <div class="flex items-center space-x-1.5 mt-1">
+                <span class="text-[10px] text-white opacity-70 font-medium">${unitName}</span>
+              </div>
             </div>
             <div class="p-5 space-y-4">
               <div>
