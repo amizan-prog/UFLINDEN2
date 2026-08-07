@@ -277,15 +277,15 @@
       'IPC': { bm: 'FARMASI PESAKIT DALAM', en: 'INPATIENT PHARMACY' },
       'UKA': { bm: 'UNIT KESIHATAN AWAM', en: 'PUBLIC HEALTH UNIT' },
       'RKD': { bm: 'JABATAN REKOD', en: 'RECORDS DEPARTMENT' },
-      'PPD': { bm: 'PUSAT PENGAMBILAN DARAH', en: 'BLOOD COLLECTION CENTRE' },
+      'PPD': { bm: 'PUSAT PENGAMBILAN DARAH', en: 'BLOOD DONATION CENTRE' },
       'W8A': { bm: 'WAD RADIOTERAPI DAN ONKOLOGI 8A (LELAKI)', en: 'RADIOTHERAPY AND ONCOLOGY WARD 8A (MALE)' },
       'W8B': { bm: 'WAD RADIOTERAPI DAN ONKOLOGI 8B (LELAKI)', en: 'RADIOTHERAPY AND ONCOLOGY WARD 8B (MALE)' },
-      'W9A': { bm: 'WAD MULTIDISIPLIN 9A', en: 'MULTIDISCIPLIN WARD 9A' },
+      'W9A': { bm: 'WAD MULTIDISIPLIN 9A', en: 'MULTIDISCIPLINARY WARD 9A' },
       'W9B': { bm: 'WAD EKSEKUTIF 9B', en: 'EXECUTIVE WARD 9B' },
       'DIET': { bm: 'DIETETIK DAN SAJIAN', en: 'DIETETICS AND CATERING' },
       'ED': { bm: 'UNIT KECEMASAN KANSER', en: 'CANCER EMERGENCY UNIT' },
       'MOR': { bm: 'MORTUARI/FORENSIK', en: 'MORTUARY/FORENSIC' },
-      'MDC': { bm: 'KLINIK MULTIDISIPLIN', en: 'MULTIDISCIPLIN CLINIC' },
+      'MDC': { bm: 'KLINIK MULTIDISIPLIN', en: 'MULTIDISCIPLINARY CLINIC' },
       'NM189': { bm: 'PERUBATAN NUKLEAR', en: 'NUCLEAR MEDICINE' },
       'NMC': { bm: 'KLINIK PERUBATAN NUKLEAR', en: 'NUCLEAR MEDICINE CLINIC' },
       'ONC': { bm: 'KLINIK ONKOLOGI', en: 'ONCOLOGY CLINIC' },
@@ -301,7 +301,7 @@
 
     // TTS-friendly pronunciation overrides (kept separate from on-screen long names)
     const UNIT_SPEECH_NAMES = {
-      'BOT': { bm: 'UNIT BRAKI TERAPI', en: 'BRACKY THERAPY UNIT' }
+      'BOT': { bm: 'UNIT BRA KI TERA PI', en: 'BRACKY THERAPY UNIT' }
     };
 
     function tr(text, lang) {
@@ -872,7 +872,7 @@
       if (swRegistrationRef && swRegistrationRef.active) {
         try { swRegistrationRef.active.postMessage({ type: 'KEEPALIVE' }); } catch(e) {}
       }
-    }, 10000);
+    }, 8000);
   </script>
 </body>
 </html>
